@@ -1,0 +1,156 @@
+Item_Name,Item_ID,Scrip_Type,Scrip_Cost
+Queso Fresco,45993,orange crafter,15
+Woolback Loin,45994,orange crafter,15
+Cassava,45990,orange crafter,15
+Splendid Mate Leaves,45991,orange crafter,15
+Aji Amarillo,45992,orange crafter,15
+Condensed Solution,44848,orange crafter,125
+Rumpless Chicken,44170,orange crafter,15
+Navel Orange,44173,orange crafter,15
+Wild Coffee Beans,44172,orange crafter,15
+Brown Cardamom,44171,orange crafter,15
+Royal Lobster,44174,orange crafter,15
+Hingan Rock Garden,41146,orange crafter,1000
+Sweet Dreamer's Stall,44876,orange crafter,500
+Command XII,41780,orange crafter,500
+Competence XII,41778,orange crafter,500
+Cunning XII,41779,orange crafter,500
+Mason's Abrasive,46252,purple crafter,500
+Command XI,41767,purple crafter,250
+Cunning XI,41766,purple crafter,250
+Competence XI,41765,purple crafter,250
+Ghost Nipper,43859,orange gatherer,5
+Red Maggots,43858,orange gatherer,5
+Levinchrome Aethersand,46246,orange gatherer,300
+Sungilt Aethersand,44035,orange gatherer,100
+Mythloam Aethersand,44036,orange gatherer,200
+Mythroot Aethersand,44037,orange gatherer,200
+Mythbrine Aethersand,44038,orange gatherer,200
+Mount Token,41807,orange gatherer,1000
+Botanist's Wall Frames,44878,orange gatherer,500
+Grasp XII,41777,orange gatherer,500
+Guerdon XII,41775,orange gatherer,500
+Guile XII,41776,orange gatherer,500
+Grasp XI,41764,purple gatherer,250
+Guerdon XI,41762,purple gatherer,250
+Guile XI,41763,purple gatherer,250
+Albino Karakul Horn,28125,skybuilders,8400
+Ballroom Etiquette - Uncouth Congratulations,31401,skybuilders,1800
+Ruby Red Dye,30116,skybuilders,100
+Cherry Pink Dye,30117,skybuilders,100
+Canary Yellow Dye,30118,skybuilders,100
+Vanilla Yellow Dye,30119,skybuilders,100
+Dragoon Blue Dye,30120,skybuilders,100
+Turquoise Blue Dye,30121,skybuilders,100
+Gunmetal Black Dye,30122,skybuilders,500
+Pearl White Dye,30123,skybuilders,500
+Metallic Brass Dye,30124,skybuilders,500
+Ballroom Etiquette - Concealing Meals,32826,skybuilders,1800
+"Ballroom Etiquette - Next, Godliness",32829,skybuilders,1800
+Ballroom Etiquette - Well Bread,30110,skybuilders,900
+Modern Aesthetics - Modern Legend,28615,skybuilders,1800
+Modern Aesthetics - Controlled Chaos,30113,skybuilders,1800
+Modern Aesthetics - Saintly Style,31406,skybuilders,1800
+Miniature White Knight,28622,skybuilders,1200
+Cerberpup,28628,skybuilders,1200
+Ufiti Horn,28917,skybuilders,8400
+Paissa Brat,13275,skybuilders,800
+Hunting Hawk,13279,skybuilders,800
+Baby Brachiosaur,15441,skybuilders,800
+Machinist Barding,29403,skybuilders,1200
+Safety in Numbers Orchestrion Roll,28893,skybuilders,1200
+The Mendicant's Relish Orchestrion Roll,30262,skybuilders,1200
+The Heavens' Ward Orchestrion Roll,31675,skybuilders,1200
+Hearthward Orchestrion Roll,33127,skybuilders,1200
+What Is Love? Orchestrion Roll,33847,skybuilders,1200
+Megalotragus Horn,30862,skybuilders,8400
+Skyrise Orchestrion Roll,33905,skybuilders,1200
+Unworthy Orchestrion Roll,38647,skybuilders,1200
+Jewel Orchestrion Roll,17626,skybuilders,600
+Paradise Found Orchestrion Roll,30259,skybuilders,600
+Fealty Orchestrion Roll,30260,skybuilders,600
+Stone and Steel Orchestrion Roll,30261,skybuilders,600
+Order Yet Undeciphered Orchestrion Roll,30267,skybuilders,600
+Freefall Orchestrion Roll,31674,skybuilders,600
+Parasol,30269,skybuilders,1800
+Cheerful Checkered Parasol,31325,skybuilders,1800
+Big Shell Whistle,32841,skybuilders,8400
+Pastoral Dot Parasol,33039,skybuilders,1800
+Sky Blue Parasol,30270,skybuilders,900
+Calming Checkered Parasol,31324,skybuilders,900
+Craftsman's Coverall Top,28592,skybuilders,2200
+Craftsman's Singlet,28594,skybuilders,2200
+Craftsman's Apron,30052,skybuilders,2200
+Craftsman's Coverall Bottoms,28593,skybuilders,2000
+Craftsman's Leather Trousers,30053,skybuilders,2000
+Antelope Doe Horn,33674,skybuilders,8400
+Craftsman's Leather Shoes,30054,skybuilders,2000
+Skyworker's Helmet,32793,skybuilders,1200
+Skyworker's Singlet,32794,skybuilders,2200
+Skyworker's Gloves,32795,skybuilders,1200
+Skyworker's Bottoms,32796,skybuilders,2000
+Skyworker's Boots,32797,skybuilders,1200
+Stuffed Hraesvelgr,28141,skybuilders,600
+Stuffed Estinien,30418,skybuilders,600
+Stuffed Cait Sith,32213,skybuilders,600
+Ballroom Etiquette - The Winsome Wallflower,28612,skybuilders,1800
+Huggable Gaelicat,30415,skybuilders,250
+Garment Rack,28971,skybuilders,350
+Fortemps Sofa,30417,skybuilders,350
+Ishgardian Display Stand,30416,skybuilders,350
+Imposing Ishgardian Shelf,28140,skybuilders,900
+Ishgardian Stove,32216,skybuilders,350
+Apron Rack,28995,skybuilders,350
+Modern Mogseat,28964,skybuilders,200
+Ballroom Etiquette - Intelligent Impressions,30111,skybuilders,1800
+Moogle Round Table,28963,skybuilders,250
+Mandragora Table Chronometer,30413,skybuilders,200
+Paissa Rug,30414,skybuilders,200
+Skysteel Ingot,28906,skybuilders,200
+Skysteel Cloth,28908,skybuilders,200
+Skysteel Leather,28907,skybuilders,200
+Gatherer's Guerdon Materia VII,25191,skybuilders,240
+Gatherer's Guerdon Materia VIII,26732,skybuilders,300
+Ballroom Etiquette - Emphatic Elucidation,30112,skybuilders,1800
+Gatherer's Guile Materia VII,25192,skybuilders,240
+Gatherer's Guile Materia VIII,26733,skybuilders,300
+Gatherer's Grasp Materia VII,25193,skybuilders,240
+Gatherer's Grasp Materia VIII,26734,skybuilders,300
+Craftsman's Competence Materia VII,25194,skybuilders,240
+Craftsman's Competence Materia VIII,26735,skybuilders,300
+Craftsman's Cunning Materia VII,25195,skybuilders,240
+Craftsman's Cunning Materia VIII,26736,skybuilders,300
+Craftsman's Command Materia VII,25196,skybuilders,240
+Craftsman's Command Materia VIII,26737,skybuilders,300
+clarity,32165,bozjan clusters,1
+Dark Entreaty,31403,bozjan clusters,50
+Caution,30884,bozjan clusters,0.2
+contention,32831,bozjan clusters,1
+Wind caller,31407,bozjan clusters,150
+fortitude,32833,bozjan clusters,1
+finesse,32832,bozjan clusters,1
+divinity,32834,bozjan clusters,1
+Pointed Misgivings,31402,bozjan clusters,50
+Pleasant Dot Parasol,33037,bozjan clusters,25
+construct 14,30102,bozjan clusters,180
+hope,33772,bozjan clusters,5
+observation,32162,bozjan clusters,1
+Todoroki Orchestrion Roll,48222,faux,400
+Sunset Orchestrion Roll,48223,faux,400
+Eggeater Horn,44503,faux,600
+Venturous Kamuy Flute,44958,faux,600
+Sabotender de la Luna Whistle,41494,faux,600
+Magicked Children's Bed,40390,faux,600
+Wondrous Lanner Whistle,38457,faux,600
+Troll Horn,36904,faux,600
+Calydontis Horn,36003,faux,600
+Incitatus Whistle,30865,faux,600
+Construct VI-S Core,33145,faux,600
+Rroneek Calf,46777,faux,400
+Tin Soldier S3,44490,faux,400
+Kydonia Strolls,41475,faux,400
+Chimpanzee,40374,faux,400
+Corgi,39474,faux,400
+Pterosquirrel,38450,faux,400
+Anteater,33691,faux,400
+Sand Fox,30874,faux,400
