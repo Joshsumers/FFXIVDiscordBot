@@ -30,7 +30,7 @@ key = open("Key.txt").read()
 ScripItemsdf = pd.read_csv('Scripitems.csv')
 
 #Setup Functions
-def fetch_prices_for_df(df, item_id_col="Item_ID", world="Exodus"):
+def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
     """
     Fetches prices for all unique Item_IDs in the DataFrame in a single API call
     and maps them back to the correct rows.
@@ -72,7 +72,7 @@ def fetch_prices_for_df(df, item_id_col="Item_ID", world="Exodus"):
     df["Price"] = df[item_id_col].map(price_lookup)
     df["Gil_Per_Scrip"] = df["Price"]/df["Scrip_Cost"]
 
-    return df[['Item_Name','Scrip_Type','Scrip_Cost','Price','Gil_Per_Scrip']].sort_values(by="Gil_Per_Scrip", ascending = False)[:5].round(2)
+    return df[['Item_Name','Scrip_Type','Scrip_Cost','Price','Gil_Per_Scrip']].sort_values(by="Gil_Per_Scrip", ascending = False)[:quantity].round(2)
 
 @bot.event
 async def on_ready():
@@ -81,10 +81,10 @@ async def on_ready():
     print("Bot is running")
 
 @bot.command()
-async def pps(ctx,scriptype):
+async def gps(ctx,scriptype, quantity = 5):
     scriptype = scriptype.lower()
     scripitems = ScripItemsdf.query(f"Scrip_Type == '{scriptype}'")
-    QueriedItems = fetch_prices_for_df(scripitems, item_id_col="Item_ID",world="Exodus")
+    QueriedItems = fetch_prices_for_df(scripitems, quantity, item_id_col="Item_ID",world="Exodus")
     msg = {}
     embdmsg = []
     for index, row in QueriedItems.iterrows():
@@ -94,7 +94,7 @@ async def pps(ctx,scriptype):
         Price = row['Price']
         GilPerScript = row['Gil_Per_Scrip']
         embdmsg.append((Name,Script,Cost,Price,GilPerScript))
-    embed2 = discord.Embed(title = 'Top 5' +' ' + str(scriptype) + ' Items to purchase to sell', color = discord.Color.red())
+    embed2 = discord.Embed(title = 'Current Top ' + str(quantity) +' '+ str(scriptype) + ' item listings (Gil Per Scrip) ', color = discord.Color.red())
     for ItemName, ScriptType, Cost, Price, GilPerScript in embdmsg:
         embed2.add_field(
             name=f'**{ItemName}**',
@@ -103,6 +103,7 @@ async def pps(ctx,scriptype):
                 f'> Cost: {Cost:,}\n'
                 f'> Sell Price: {Price:,}\n'
                 f'> Gil Per Script: {GilPerScript:,}'))
+        embed2.set_footer(text="The information provided comes from the Universalis API, information should be utilized to make informed decisions. Rankings can be influenced by items with few inflated listings")
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(embed=embed2)
 bot.run(str(key))
