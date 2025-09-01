@@ -10,11 +10,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 from collections import defaultdict
 
-#Setup Static Variables
-AggregatedAPIBaseURL = 'https://universalis.app/api/v2/aggregated/Exodus/'
-CurrentPriceAPIBaseURL = 'https://universalis.app/api/v2/history/North-America/'
-CurrentPriceAdditonalParams = '?statsWithin=600000'
-
+#Setup Header for API calls incase discussion is needed. 
 headers = {
     'User-Agent':'@Pseudechis'
 }
@@ -22,8 +18,8 @@ headers = {
 
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # Enable SERVER MEMBERS INTENT
-intents.presences = True # Enable PRESENCE INTENT
+intents.members = True  
+intents.presences = True 
 bot = commands.Bot(command_prefix="!", description='BLNC Bot',intents=intents)
 
 key = open("Key.txt").read()
@@ -41,14 +37,14 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
         world: World/server name for Universalis API.
 
     Returns:
-        Original DataFrame with two new columns, one being "Price" which shows the price fo the item, the other being "Gil_Per_Scrip"
+        Original DataFrame with two new columns, one being "Price" which shows the price for the item, the other being "Gil_Per_Scrip"
         which shows how much gil you get per scrip spent.
     """
-    # Step 1: Get all unique IDs
+    # Step 1: Get all item IDs
     item_ids = df[item_id_col].unique()
     id_string = ",".join(map(str, item_ids))
 
-    # Step 2: Call API once
+    # Step 2: Call Universalis aggregation API and feed it the world function as well as the comma seperated string of item ids
     api_url = f"https://universalis.app/api/v2/aggregated/{world}/{id_string}"
     try:
         response = re.get(api_url, headers=headers)
@@ -58,7 +54,7 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
         print(f"API request failed: {e}")
         return df.assign(Price=None)
 
-    # Step 3: Build lookup dictionary
+    # Step 3: Build lookup dictionary for prices by item id
     price_lookup = {}
     for result in data.get("results", []):
         item_id = result['itemId']
@@ -68,11 +64,12 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
             price = None
         price_lookup[item_id] = price
 
-    # Step 4: Map prices back to DataFrame
+    # Step 4: Map prices back to DataFrame by item id and creat gil_per_scrip column
     df["Price"] = df[item_id_col].map(price_lookup)
-    df["Gil_Per_Scrip"] = df["Price"]/df["Scrip_Cost"]
+    df["Gil_Per_Currency"] = df["Price"]/df["Currency_Cost"]
 
-    return df[['Item_Name','Scrip_Type','Scrip_Cost','Price','Gil_Per_Scrip']].sort_values(by="Gil_Per_Scrip", ascending = False)[:quantity].round(2)
+    return df[['Item_Name','Currency_Type','Currency_Cost','Price','Gil_Per_Currency']].sort_values(by="Gil_Per_Currency", ascending = False)[:quantity].round(2)
+
 
 @bot.event
 async def on_ready():
@@ -83,26 +80,26 @@ async def on_ready():
 @bot.command()
 async def gps(ctx,scriptype, quantity = 5):
     scriptype = scriptype.lower()
-    scripitems = ScripItemsdf.query(f"Scrip_Type == '{scriptype}'")
+    scripitems = ScripItemsdf.query(f"Currency_Type == '{scriptype}'")
     QueriedItems = fetch_prices_for_df(scripitems, quantity, item_id_col="Item_ID",world="Exodus")
     msg = {}
     embdmsg = []
     for index, row in QueriedItems.iterrows():
         Name = row['Item_Name']
-        Script = row['Scrip_Type']
-        Cost = row['Scrip_Cost']
+        Script = row['Currency_Type']
+        Cost = row['Currency_Cost']
         Price = row['Price']
-        GilPerScript = row['Gil_Per_Scrip']
+        GilPerScript = row['Gil_Per_Currency']
         embdmsg.append((Name,Script,Cost,Price,GilPerScript))
-    embed2 = discord.Embed(title = 'Current Top ' + str(quantity) +' '+ str(scriptype) + ' item listings (Gil Per Scrip) ', color = discord.Color.red())
+    embed2 = discord.Embed(title = 'Current Top ' + str(quantity) +' '+ str(scriptype) + ' item listings (Gil Per Currency) ', color = discord.Color.red())
     for ItemName, ScriptType, Cost, Price, GilPerScript in embdmsg:
         embed2.add_field(
             name=f'**{ItemName}**',
             value=(
-                f'> Script Type: {ScriptType}\n'
+                f'> Currency Type: {ScriptType}\n'
                 f'> Cost: {Cost:,}\n'
                 f'> Sell Price: {Price:,}\n'
-                f'> Gil Per Script: {GilPerScript:,}'))
+                f'> Gil Per Currency: {GilPerScript:,}'))
         embed2.set_footer(text="The information provided comes from the Universalis API, information should be utilized to make informed decisions. Rankings can be influenced by items with few inflated listings")
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(embed=embed2)

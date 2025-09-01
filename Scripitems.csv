@@ -1,4 +1,4 @@
-Item_Name,Item_ID,Scrip_Type,Scrip_Cost
+Item_Name,Item_ID,Currency_Type,Currency_Cost
 Queso Fresco,45993,orange crafter,15
 Woolback Loin,45994,orange crafter,15
 Cassava,45990,orange crafter,15
