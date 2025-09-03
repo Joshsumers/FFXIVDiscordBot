@@ -56,19 +56,24 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
 
     # Step 3: Build lookup dictionary for prices by item id
     price_lookup = {}
+    salesvolume_lookup = {}
     for result in data.get("results", []):
         item_id = result['itemId']
         try:
             price = result["nq"]["minListing"]["world"]["price"]
+            salesvolume = result["nq"]["dailySaleVelocity"]["world"]["quantity"]
         except (TypeError, KeyError):
             price = None
+            salesvolume = None
         price_lookup[item_id] = price
+        salesvolume_lookup[item_id] = salesvolume
 
     # Step 4: Map prices back to DataFrame by item id and creat gil_per_scrip column
     df["Price"] = df[item_id_col].map(price_lookup)
     df["Gil_Per_Currency"] = df["Price"]/df["Currency_Cost"]
+    df["Salesvolume"] = df[item_id_col].map(salesvolume_lookup)
 
-    return df[['Item_Name','Currency_Type','Currency_Cost','Price','Gil_Per_Currency']].sort_values(by="Gil_Per_Currency", ascending = False)[:quantity].round(2)
+    return df[['Item_Name','Currency_Type','Currency_Cost','Price','Gil_Per_Currency','Salesvolume']].sort_values(by="Gil_Per_Currency", ascending = False)[:quantity].round(2)
 
 
 @bot.event
@@ -90,16 +95,18 @@ async def gps(ctx,scriptype, quantity = 5):
         Cost = row['Currency_Cost']
         Price = row['Price']
         GilPerScript = row['Gil_Per_Currency']
-        embdmsg.append((Name,Script,Cost,Price,GilPerScript))
+        DailySales = row['Salesvolume']
+        embdmsg.append((Name,Script,Cost,Price,GilPerScript,DailySales))
     embed2 = discord.Embed(title = 'Current Top ' + str(quantity) +' '+ str(scriptype) + ' item listings (Gil Per Currency) ', color = discord.Color.red())
-    for ItemName, ScriptType, Cost, Price, GilPerScript in embdmsg:
+    for ItemName, ScriptType, Cost, Price, GilPerScript, DailySales in embdmsg:
         embed2.add_field(
             name=f'**{ItemName}**',
             value=(
                 f'> Currency Type: {ScriptType}\n'
                 f'> Cost: {Cost:,}\n'
                 f'> Sell Price: {Price:,}\n'
-                f'> Gil Per Currency: {GilPerScript:,}'))
+                f'> Gil Per Currency: {GilPerScript:,}\n'
+                f'> Daily Sales: {DailySales:,}'))
         embed2.set_footer(text="The information provided comes from the Universalis API, information should be utilized to make informed decisions. Rankings can be influenced by items with few inflated listings")
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(embed=embed2)
