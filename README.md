@@ -15,3 +15,5 @@ oc silver
 oc gold  
 sanguinite  
 
+Also has a command that auto-runs based on an asyncio.sleep period of 60 seconds that checks for prices items that are potentially mispriced or significantly cheaper on another world in the region (default North-America) than the selected world (default Exodus) if 
+they are found to be significantly cheaper based on a price ratio (currently <=0.50 or 50% cheaper) then a message is posted to a specified discord channel alerting of these mispriced item, how much they are, and what world they are on.
