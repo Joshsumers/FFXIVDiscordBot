@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from datetime import datetime
 import aiohttp
+import csv
 
 #Setup Header for API calls incase discussion is needed. 
 headers = {
@@ -123,7 +124,6 @@ async def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "
                 world = None
         na_price_lookup[int(item_id)] = naprice
         world_name_lookup[int(item_id)] = world
-    print("Region Response Processed")
 
     #build dictionary of aggreated price of each item based on the world entered, default being Exodus
     world_price_lookup = {}
@@ -134,7 +134,6 @@ async def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "
         except (TypeError, KeyError):
             worldprice = None
         world_price_lookup[item_id] = worldprice
-    print("World Response Processed")
     
     #create new DF columns for the information above by mapping them back to the data frame utilziing the item id, while also creating a price ratio column based on that information
     df['CheapestPrice'] = df[item_id_col].map(na_price_lookup)
@@ -292,11 +291,30 @@ async def itemrefresh(ctx):
     await channel.send(f"The Expensive items have been refreshed")
 
 @bot.command()
-async def deleteitem(ctx,itemname):
+async def deleteitem(ctx,itemname, csv = False):
     itemtodropExpensiveItemsdf = ExpensiveItemsdf[ExpensiveItemsdf['Item_Name'] == f"{itemname}"].index
     ExpensiveItemsdf.drop(itemtodropExpensiveItemsdf, inplace= True)
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(f"The {itemname} has been dropped, refresh the dataframe utilizing itemrefresh to readd it.")
+    if csv == True and ctx.author == ctx.guild.owner:
+        ExpensiveItemsdf[['Item_Name','Item_ID']].to_csv('Expensiveitems.csv', index=False)
+        await itemrefresh(ctx)
+        await channel.send(f"The {itemname} has been deleted from the csv,and the dataframe has been refreshed.")
+
+
+@bot.command()
+async def additem(ctx,itemname,itemid,csvb = False):
+    global ExpensiveItemsdf
+    ExpensiveItemsdf.loc[len(ExpensiveItemsdf)] = [itemname,itemid]
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The {itemname} has been added to the dataframe,if you'd like the item added to the dataframe please contact Psychosis.")
+    if csvb == True and ctx.author == ctx.guild.owner:
+        newitems =  [f'{itemname}',f'{itemid}']
+        with open('Expensiveitems.csv','a',newline='') as EICSV:
+            csv_write = csv.writer(EICSV)
+            csv_write.writerow(newitems)
+        await itemrefresh(ctx)
+        await channel.send(f"The {itemname} has been added to the csv,and the dataframe has been refreshed.")
 
 bot.run(str(key))
 
