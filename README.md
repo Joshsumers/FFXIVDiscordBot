@@ -33,6 +33,7 @@ currencyrefresh- which refreshes the currency item data frame based on an update
 itemrefresh - which refreshes the Expensiveitems df based on updates to that csv.  
 
 deleteitem(itemname,csv = False) - which deletes an item from the dataframe temporarily, it will be readded upon running the itemrefresh command, if the csv command is added as True then it will permanetely delete the item from the csv.  
+
 additem(itemname,itemid,csvb = False) - which adds an item to the dataframe temporarily, it will be lost among refresh of the dataframe. if csv is changed to true then it will be added to the csv permanetely. the permanent versions of delete / add item can only be ran by the guild owner.
 
 -----------------------------------------------------------
