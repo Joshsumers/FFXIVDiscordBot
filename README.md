@@ -16,7 +16,7 @@ oc gold
 sanguinite  
 
 Other commands include
-**Ping** - which makes the bot ping the specified role
+**Ping** - which makes the bot ping the specified role \n
 **NoPing** - which makes the bot not ping
 **Threshold** - which tells you the current priceratio (default of 0.33) for it posting a message.
 **changethreshold(threshold)** which will allow you to change the threshold it should be a decimal IE: 0.3 would be 30% cheaper than world pricing.
