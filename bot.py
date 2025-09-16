@@ -1,14 +1,11 @@
 #import neccessary libaries
-import json
 import pandas as pd
-import requests as re
-import statistics
-import time
 import asyncio
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
-from collections import defaultdict
+from datetime import datetime
+import aiohttp
+import csv
 
 #Setup Header for API calls incase discussion is needed. 
 headers = {
@@ -20,14 +17,15 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True  
 intents.presences = True 
-bot = commands.Bot(command_prefix="!", description='BLNC Bot',intents=intents)
-
+bot = commands.Bot(command_prefix="!", description='BLNC Bot',intents=intents, help_command=None)
+Ping = True
 key = open("Key.txt").read()
 ScripItemsdf = pd.read_csv('Scripitems.csv')
 ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+PostThreshold = 0.33
 
 #Setup Functions
-def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
+async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
     """
     Fetches prices for all unique Item_IDs in the DataFrame in a single API call
     and maps them back to the correct rows.
@@ -48,10 +46,10 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
     #Call Universalis aggregation API and feed it the world function as well as the comma seperated string of item ids
     api_url = f"https://universalis.app/api/v2/aggregated/{world}/{id_string}"
     try:
-        response = re.get(api_url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-    except re.exceptions.RequestException as e:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(api_url) as response:
+                data = (await response.json())
+    except Exception as e:
         print(f"API request failed: {e}")
         return df.assign(Price=None)
 
@@ -77,7 +75,7 @@ def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
     #Return Dataframe with only the columns that we are interested in
     return df[['Item_Name','Currency_Type','Currency_Cost','Price','Gil_Per_Currency','Salesvolume']].sort_values(by="Gil_Per_Currency", ascending = False)[:quantity].round(2)
 
-def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "North-America",World = "Exodus"):
+async def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "North-America",World = "Exodus"):
 
     """
     Fetches prices for all the "Expensive" items that were imported from the csv, feeds them through universalis real time pricing API for NA prices, and Aggreation API for exodus prices.
@@ -103,13 +101,12 @@ def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "North-
     region_api_url = f'https://universalis.app/api/v2/{Region}/{id_string}?listings=1&statsWithin=65000&fields=items.listings.pricePerUnit%2Citems.listings.worldName'
     world_api_url = f"https://universalis.app/api/v2/aggregated/{World}/{id_string}"
     try:
-        region_response = re.get(region_api_url, headers=headers)
-        world_response = re.get(world_api_url, headers=headers)
-        region_response.raise_for_status()
-        world_response.raise_for_status()
-        regiondata = region_response.json()
-        worlddata=world_response.json()
-    except re.exceptions.RequestException as e:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(region_api_url) as regionresponse:
+                regiondata = (await regionresponse.json())
+            async with session.get(world_api_url) as worldresponse:
+                worlddata = (await worldresponse.json())
+    except Exception as e:
         print(f"API request failed: {e}")
         return df.assign(Price=None)
     #build dictionary of cheapest NA Priced item and the world that it is on by item id
@@ -156,36 +153,44 @@ async def on_ready():
 async def checkprices():
     while True:
         await asyncio.sleep(60)
-        print("Checking Prices!")
-        ExpensiveItemCheck = fetch_price_for_expensive_items(ExpensiveItemsdf)
-        GoodPricedItems = ExpensiveItemCheck.query("PriceRatio <= 0.50")
+        DupeItems = pd.DataFrame()
+        runningtime = datetime.now()
+        print(f"Checking Prices at {runningtime}!")
+        ExpensiveItemCheck = await fetch_price_for_expensive_items(ExpensiveItemsdf)
+        GoodPricedItems = ExpensiveItemCheck.query(f"PriceRatio < {PostThreshold}")
         Channel = bot.get_channel(1414393136779886653)
+        print(ExpensiveItemCheck)
         if GoodPricedItems.empty == True:
             print("No Exceptionally Well Priced items found")
         else:
-            for index, row in GoodPricedItems.iterrows():
-                Name = row["Item_Name"]
-                CheapestWorld = row["CheapestWorld"]
-                CheapestPrice = row["CheapestPrice"]
-                ExoPrice = row["ExodusPrice"]
-                Ratio = row["PriceRatio"]
-                goodpricedembmsg = discord.Embed(title=f"{Name} is well priced on {CheapestWorld}", color= discord.Color.dark_red())
-                goodpricedembmsg.add_field(
-                    name = f"**{Name}**",
-                    value=(
-                    f'> Item Name: {Name}\n'
-                    f'> Cheapest World: {CheapestWorld}\n'
-                    f'> Cheapest Price: {CheapestPrice:,}\n'
-                    f'> Exodus Price: {ExoPrice:,}\n'
-                    f'> Price Ratio: {Ratio}'))
-                goodpricedembmsg.set_footer(text="The Cheapest Prices are checked on a 60 second basis utilizing Universalis Real-Time API, while the Exodus Prices are checked utilizing the Universalis Aggreation API to get better averages.")
-                await Channel.send(embed = goodpricedembmsg)
+            if DupeItems.equals(GoodPricedItems) == False:
+                DupeItems = GoodPricedItems
+                for index, row in GoodPricedItems.iterrows():
+                    Name = row["Item_Name"]
+                    CheapestWorld = row["CheapestWorld"]
+                    CheapestPrice = row["CheapestPrice"]
+                    ExoPrice = row["ExodusPrice"]
+                    Ratio = row["PriceRatio"]
+                    goodpricedembmsg = discord.Embed(title=f"{Name} is well priced on {CheapestWorld}", color= discord.Color.dark_red())
+                    goodpricedembmsg.add_field(
+                        name = f"**{Name}**",
+                        value=(
+                        f'> Item Name: {Name}\n'
+                        f'> Cheapest World: {CheapestWorld}\n'
+                        f'> Cheapest Price: {CheapestPrice:,}\n'
+                        f'> Exodus Price: {ExoPrice:,}\n'
+                        f'> Price Ratio: {Ratio}'))
+                    goodpricedembmsg.set_footer(text="The Cheapest Prices are checked on a 60 second basis utilizing Universalis Real-Time API, while the Exodus Prices are checked utilizing the Universalis Aggreation API to get better averages.")
+                    if Ping == True:
+                        await Channel.send("<@&1073841796037218364>",embed = goodpricedembmsg)
+                    elif Ping == False:
+                        await Channel.send(embed = goodpricedembmsg)
 
 @bot.command()
 async def gps(ctx,scriptype, quantity = 5):
     scriptype = scriptype.lower()
     scripitems = ScripItemsdf.query(f"Currency_Type == '{scriptype}'")
-    QueriedItems = fetch_prices_for_df(scripitems, quantity, item_id_col="Item_ID",world="Exodus")
+    QueriedItems = await fetch_prices_for_df(scripitems, quantity, item_id_col="Item_ID",world="Exodus")
     msg = {}
     embdmsg = []
     for index, row in QueriedItems.iterrows():
@@ -209,6 +214,108 @@ async def gps(ctx,scriptype, quantity = 5):
         embed2.set_footer(text="The information provided comes from the Universalis API, information should be utilized to make informed decisions. Rankings can be influenced by items with few inflated listings")
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(embed=embed2)
+
+@bot.command()
+async def help(ctx):
+    channel = bot.get_channel(ctx.channel.id)
+    currencytypes = ""
+    commands = ""
+    for x in ScripItemsdf["Currency_Type"].unique():
+        currencytypes += f"\n{x},"
+            
+
+    for x in bot.commands:
+        commands += f"\n{x.name},"
+    
+
+    helpembed = discord.Embed(title = 'BLNC Bot Help', color=discord.Color.green())
+    helpembed.add_field(
+        name = '**Commands**',
+        value = (
+            f'{commands[:-1]}'
+        )
+    )
+    helpembed.add_field(
+        name = '**Currencies**',
+        value = (
+            f'{currencytypes[:-1]}'
+        )
+    )
+    helpembed.set_footer(text = "The BLNC Bot is a bot intended to help its users with earning the most gil possible by providing information from universalis APIs")
+    await channel.send(embed=helpembed)
+@bot.command()
+async def NoPing(ctx):
+    global Ping
+    Ping = False
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send("Bot will not ping")
+
+@bot.command()
+async def Ping(ctx):
+    global Ping
+    Ping = True
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send("Bot will start pinging again")
+
+@bot.command()
+@commands.is_owner()
+async def stopblnc(ctx):
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send("Bot is Shutting Down")
+    await ctx.bot.close()
+
+@bot.command()
+async def threshold(ctx):
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The current posting threshold is {PostThreshold}")
+
+@bot.command()
+async def changethreshold(ctx, threshold):
+    global PostThreshold
+    PostThreshold = threshold
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"Bot posting threshold has been changed to {threshold}")
+
+@bot.command()
+async def currencyrefresh(ctx):
+    global ScripItemsdf
+    ScripItemsdf = pd.read_csv('Scripitems.csv')
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The Currency items have been refreshed")
+
+@bot.command()
+async def itemrefresh(ctx):
+    global ExpensiveItemsdf
+    ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The Expensive items have been refreshed")
+
+@bot.command()
+async def deleteitem(ctx,itemname, csv = False):
+    itemtodropExpensiveItemsdf = ExpensiveItemsdf[ExpensiveItemsdf['Item_Name'] == f"{itemname}"].index
+    ExpensiveItemsdf.drop(itemtodropExpensiveItemsdf, inplace= True)
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The {itemname} has been dropped, refresh the dataframe utilizing itemrefresh to readd it.")
+    if csv == True and ctx.author == ctx.guild.owner:
+        ExpensiveItemsdf[['Item_Name','Item_ID']].to_csv('Expensiveitems.csv', index=False)
+        await itemrefresh(ctx)
+        await channel.send(f"The {itemname} has been deleted from the csv,and the dataframe has been refreshed.")
+
+
+@bot.command()
+async def additem(ctx,itemname,itemid,csvb = False):
+    global ExpensiveItemsdf
+    ExpensiveItemsdf.loc[len(ExpensiveItemsdf)] = [itemname,itemid]
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(f"The {itemname} has been added to the dataframe,if you'd like the item added to the dataframe please contact Psychosis.")
+    if csvb == True and ctx.author == ctx.guild.owner:
+        newitems =  [f'{itemname}',f'{itemid}']
+        with open('Expensiveitems.csv','a',newline='') as EICSV:
+            csv_write = csv.writer(EICSV)
+            csv_write.writerow(newitems)
+        await itemrefresh(ctx)
+        await channel.send(f"The {itemname} has been added to the csv,and the dataframe has been refreshed.")
+
 bot.run(str(key))
 
 
