@@ -163,7 +163,7 @@ async def checkprices():
         if GoodPricedItems.empty == True:
             print("No Exceptionally Well Priced items found")
         else:
-            if DupeItems.equals(GoodPricedItems):
+            if DupeItems.equals(GoodPricedItems) == False:
                 DupeItems = GoodPricedItems
                 for index, row in GoodPricedItems.iterrows():
                     Name = row["Item_Name"]
