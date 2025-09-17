@@ -243,19 +243,20 @@ async def help(ctx):
     )
     helpembed.set_footer(text = "The BLNC Bot is a bot intended to help its users with earning the most gil possible by providing information from universalis APIs")
     await channel.send(embed=helpembed)
-@bot.command()
-async def NoPing(ctx):
-    global Ping
-    Ping = False
-    channel = bot.get_channel(ctx.channel.id)
-    await channel.send("Bot will not ping")
 
 @bot.command()
-async def Ping(ctx):
+async def Ping(ctx, pingnarg):
     global Ping
-    Ping = True
     channel = bot.get_channel(ctx.channel.id)
-    await channel.send("Bot will start pinging again")
+    if pingnarg.lower() == "ping":
+        Ping = True
+        await channel.send("Bot will start pinging again")
+    elif pingnarg.lower()  == "noping":
+        Ping = False
+        await channel.send("Bot will not ping")
+
+    
+    
 
 @bot.command()
 @commands.is_owner()
@@ -275,20 +276,18 @@ async def changethreshold(ctx, threshold):
     PostThreshold = threshold
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(f"Bot posting threshold has been changed to {threshold}")
-
+    
 @bot.command()
-async def currencyrefresh(ctx):
-    global ScripItemsdf
-    ScripItemsdf = pd.read_csv('Scripitems.csv')
-    channel = bot.get_channel(ctx.channel.id)
-    await channel.send(f"The Currency items have been refreshed")
-
-@bot.command()
-async def itemrefresh(ctx):
+async def itemrefresh(ctx,refresharg):
     global ExpensiveItemsdf
-    ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+    global ScripItemsdf
     channel = bot.get_channel(ctx.channel.id)
-    await channel.send(f"The Expensive items have been refreshed")
+    if refresharg.lower() == "currencies":
+        ScripItemsdf = pd.read_csv('Scripitems.csv')
+        await channel.send(f"The Currency items have been refreshed")
+    elif refresharg.lower() == "items":
+        ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+        await channel.send(f"The Expensive items have been refreshed")
 
 @bot.command()
 async def deleteitem(ctx,itemname, csv = False):
