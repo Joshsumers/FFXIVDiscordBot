@@ -20,9 +20,7 @@ sanguinite
 Other commands include
 -----------------------------------------------------------
 
-Ping - which makes the bot ping the specified role  
-
-NoPing - which makes the bot not ping  
+Ping(pingarg) - determines if the boss will ping or not, "ping" will ping, "noping" will not.
 
 Threshold - which tells you the current priceratio (default of 0.33) for it posting a message.  
 
@@ -30,7 +28,7 @@ changethreshold(threshold) - which will allow you to change the threshold it sho
 
 currencyrefresh- which refreshes the currency item data frame based on an update to the csv.  
 
-itemrefresh - which refreshes the Expensiveitems df based on updates to that csv.  
+itemrefresh(refresharg) - will refresh the currency or expensive item df based on their csv and which argument is used. "currencies" for the currency df, "items" for the expensive item df.
 
 deleteitem(itemname,csv = False) - which deletes an item from the dataframe temporarily, it will be readded upon running the itemrefresh command, if the csv command is added as True then it will permanetely delete the item from the csv.  
 
