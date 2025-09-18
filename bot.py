@@ -23,6 +23,7 @@ key = open("Key.txt").read()
 ScripItemsdf = pd.read_csv('Scripitems.csv')
 ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
 PostThreshold = 0.33
+DupeItems = pd.DataFrame()
 
 #Setup Functions
 async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
@@ -153,8 +154,8 @@ async def on_ready():
 async def checkprices():
     while True:
         await asyncio.sleep(60)
-        DupeItems = pd.DataFrame()
         runningtime = datetime.now()
+        global DupeItems
         print(f"Checking Prices at {runningtime}!")
         ExpensiveItemCheck = await fetch_price_for_expensive_items(ExpensiveItemsdf)
         GoodPricedItems = ExpensiveItemCheck.query(f"PriceRatio < {PostThreshold}")
@@ -162,9 +163,9 @@ async def checkprices():
         print(ExpensiveItemCheck)
         if GoodPricedItems.empty == True:
             print("No Exceptionally Well Priced items found")
-        else:
+        elif GoodPricedItems.empty == False:
             if DupeItems.equals(GoodPricedItems) == False:
-                DupeItems = GoodPricedItems
+                DupeItems = GoodPricedItems.copy(deep = True)
                 for index, row in GoodPricedItems.iterrows():
                     Name = row["Item_Name"]
                     CheapestWorld = row["CheapestWorld"]
@@ -183,7 +184,7 @@ async def checkprices():
                     goodpricedembmsg.set_footer(text="The Cheapest Prices are checked on a 60 second basis utilizing Universalis Real-Time API, while the Exodus Prices are checked utilizing the Universalis Aggreation API to get better averages.")
                     if Ping == True:
                         await Channel.send("<@&1073841796037218364>",embed = goodpricedembmsg)
-                    elif Ping == False:
+                    else:
                         await Channel.send(embed = goodpricedembmsg)
 
 @bot.command()
@@ -254,10 +255,16 @@ async def Ping(ctx, pingnarg):
     elif pingnarg.lower()  == "noping":
         Ping = False
         await channel.send("Bot will not ping")
-
+    
+@bot.command() 
+async def itemlist(ctx):
+    itemNames = ""
+    for index, row in ExpensiveItemsdf.iterrows():
+        itemNames += f"\n{row['Item_Name']},"
+    channel = bot.get_channel(ctx.channel.id)
+    await channel.send(itemNames)
     
     
-
 @bot.command()
 @commands.is_owner()
 async def stopblnc(ctx):
