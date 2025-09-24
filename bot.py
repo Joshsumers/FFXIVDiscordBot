@@ -24,9 +24,11 @@ ScripItemsdf = pd.read_csv('Scripitems.csv')
 ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
 PostThreshold = 0.33
 DupeItems = pd.DataFrame()
+World = "Exodus"
+Region = "North-America"
 
 #Setup Functions
-async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus"):
+async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world=World):
     """
     Fetches prices for all unique Item_IDs in the DataFrame in a single API call
     and maps them back to the correct rows.
@@ -76,7 +78,7 @@ async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world="Exodus
     #Return Dataframe with only the columns that we are interested in
     return df[['Item_Name','Currency_Type','Currency_Cost','Price','Gil_Per_Currency','Salesvolume']].sort_values(by="Gil_Per_Currency", ascending = False)[:quantity].round(2)
 
-async def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = "North-America",World = "Exodus"):
+async def fetch_price_for_expensive_items(df,  item_id_col="Item_ID", Region = Region,World = World):
 
     """
     Fetches prices for all the "Expensive" items that were imported from the csv, feeds them through universalis real time pricing API for NA prices, and Aggreation API for exodus prices.
@@ -150,6 +152,8 @@ async def on_ready():
     await bot.change_presence(activity = Activity)
     bot.loop.create_task(checkprices())
     print("Bot is running")
+    print(f"Current World is: {World}")
+    print(f"Current Region is: {Region}")
 
 async def checkprices():
     while True:
@@ -321,6 +325,17 @@ async def additem(ctx,itemname,itemid,csvb = False):
             csv_write.writerow(newitems)
         await itemrefresh(ctx)
         await channel.send(f"The {itemname} has been added to the csv,and the dataframe has been refreshed.")
+@bot.command()
+async def setvar(ctx, Typeset, worldset = "", regionset = ""):
+    global World
+    global Region
+    if Typeset.lower() == "world":
+        World = worldset
+    elif Typeset.lower() == "region":
+        Region = regionset
+    elif Typeset.lower() == "both":
+        World = worldset
+        Region = regionset
 
 bot.run(str(key))
 
