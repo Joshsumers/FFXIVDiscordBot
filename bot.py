@@ -2,30 +2,38 @@
 import pandas as pd
 import asyncio
 import discord
+from discord.ext import tasks
 from discord.ext import commands
+from datetime import time
 from datetime import datetime
+from dotenv import load_dotenv
+import sqlite3
 import aiohttp
-import csv
+import os
 
 #Setup Header for API calls incase discussion is needed. 
 headers = {
     'User-Agent':'Discord: @Pseudechis'
 }
 
-
+load_dotenv()
+con = sqlite3.connect('blncbot.db')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True  
 intents.presences = True 
 bot = commands.Bot(command_prefix="!", description='BLNC Bot',intents=intents, help_command=None)
 Ping = True
-key = open("Key.txt").read()
-ScripItemsdf = pd.read_csv('Scripitems.csv')
-ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+key = os.getenv('DISCORD_TOKEN')
+ScripItemsdf = pd.read_sql_query("SELECT * FROM Scripitems", con)
+ExpensiveItemsdf = pd.read_sql_query("SELECT * FROM ExpensiveItems", con)
+Birthdays = pd.read_sql_query("Select * FROM Birthdays", con)
+con.close()
 PostThreshold = 0.33
 DupeItems = pd.DataFrame()
 World = "Exodus"
 Region = "North-America"
+midnight = time(hour=0, minute=0, second = 0)
 
 #Setup Functions
 async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world=World):
@@ -151,9 +159,23 @@ async def on_ready():
     Activity = discord.Game(name = "BLNC Bot")
     await bot.change_presence(activity = Activity)
     bot.loop.create_task(checkprices())
+    checkbirthday.start()
     print("Bot is running")
     print(f"Current World is: {World}")
     print(f"Current Region is: {Region}")
+
+@tasks.loop(time = midnight)
+async def checkbirthday():
+    print("I'm Checking for birthdays!")
+    today = datetime.now().strftime(f"%m-%d")
+    channel = bot.get_channel(1388992916441141430)
+    Birthdaycheck = Birthdays.query("Birthday == @today")
+    if Birthdaycheck.empty == False:
+        for index,row in Birthdaycheck.iterrows():
+            Name = row["Name"]
+            Birthday = row["Birthday"]
+            await channel.send(f"It is {Name}'s Birthday Today! {Birthday}")
+
 
 async def checkprices():
     while True:
@@ -292,13 +314,15 @@ async def changethreshold(ctx, threshold):
 async def itemrefresh(ctx,refresharg):
     global ExpensiveItemsdf
     global ScripItemsdf
+    con = sqlite3.connect('blncbot.db')
     channel = bot.get_channel(ctx.channel.id)
     if refresharg.lower() == "currencies":
-        ScripItemsdf = pd.read_csv('Scripitems.csv')
+        ScripItemsdf = pd.read_sql_query("SELECT * FROM Scripitems", con)
         await channel.send(f"The Currency items have been refreshed")
     elif refresharg.lower() == "items":
-        ExpensiveItemsdf = pd.read_csv('Expensiveitems.csv')
+        ExpensiveItemsdf = pd.read_sql_query("SELECT * FROM Expensiveitems", con)
         await channel.send(f"The Expensive items have been refreshed")
+    con.close()
 
 @bot.command()
 async def deleteitem(ctx,itemname, csv = False):
@@ -307,9 +331,12 @@ async def deleteitem(ctx,itemname, csv = False):
     channel = bot.get_channel(ctx.channel.id)
     await channel.send(f"The {itemname} has been dropped, refresh the dataframe utilizing itemrefresh to readd it.")
     if csv == True and ctx.author == ctx.guild.owner:
-        ExpensiveItemsdf[['Item_Name','Item_ID']].to_csv('Expensiveitems.csv', index=False)
-        await itemrefresh(ctx)
+        await itemrefresh(ctx,"items")
+        ExpensiveItemsdf.drop(itemtodropExpensiveItemsdf, inplace= True)
+        con = sqlite3.connect('blncbot.db')
+        ExpensiveItemsdf[['Item_Name','Item_ID']].to_sql('Expensiveitems',con, if_exists='replace', index=False)
         await channel.send(f"The {itemname} has been deleted from the csv,and the dataframe has been refreshed.")
+        con.close()
 
 
 @bot.command()
@@ -320,11 +347,13 @@ async def additem(ctx,itemname,itemid,csvb = False):
     await channel.send(f"The {itemname} has been added to the dataframe,if you'd like the item added to the dataframe please contact Psychosis.")
     if csvb == True and ctx.author == ctx.guild.owner:
         newitems =  [f'{itemname}',f'{itemid}']
-        with open('Expensiveitems.csv','a',newline='') as EICSV:
-            csv_write = csv.writer(EICSV)
-            csv_write.writerow(newitems)
-        await itemrefresh(ctx)
+        con = sqlite3.connect('blncbot.db')
+        cursor = con.cursor()
+        cursor.execute("INSERT INTO ExpensiveItems (Item_Name,Item_ID) VALUES (?,?)",newitems)
+        await itemrefresh(ctx,"items")
         await channel.send(f"The {itemname} has been added to the csv,and the dataframe has been refreshed.")
+        con.close()
+
 @bot.command()
 async def setvar(ctx, Typeset, worldset = "", regionset = ""):
     global World
@@ -337,7 +366,7 @@ async def setvar(ctx, Typeset, worldset = "", regionset = ""):
         World = worldset
         Region = regionset
 
-bot.run(str(key))
+bot.run(key)
 
 
 
