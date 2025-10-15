@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import sqlite3
 import aiohttp
 import os
+import zoneinfo
 
 #Setup Header for API calls incase discussion is needed. 
 headers = {
@@ -23,7 +24,7 @@ intents.message_content = True
 intents.members = True  
 intents.presences = True 
 bot = commands.Bot(command_prefix="!", description='BLNC Bot',intents=intents, help_command=None)
-Ping = True
+Ping = False
 key = os.getenv('DISCORD_TOKEN')
 ScripItemsdf = pd.read_sql_query("SELECT * FROM Scripitems", con)
 ExpensiveItemsdf = pd.read_sql_query("SELECT * FROM ExpensiveItems", con)
@@ -33,7 +34,7 @@ PostThreshold = 0.33
 DupeItems = pd.DataFrame()
 World = "Exodus"
 Region = "North-America"
-midnight = time(hour=0, minute=0, second = 0)
+midnight = time(hour=0, minute=0, second = 0, tzinfo=zoneinfo.ZoneInfo("America/Chicago"))
 
 #Setup Functions
 async def fetch_prices_for_df(df, quantity, item_id_col="Item_ID", world=World):
@@ -365,6 +366,31 @@ async def setvar(ctx, Typeset, worldset = "", regionset = ""):
     elif Typeset.lower() == "both":
         World = worldset
         Region = regionset
+@bot.command()
+async def birthday(ctx, reqtype = "list", name = None, birthday = None):
+    channel = bot.get_channel(ctx.channel.id)
+    try:
+        con = sqlite3.connect('blncbot.db')
+        cursor = con.cursor()
+        if reqtype.lower() == "new":
+            try:
+                cursor.execute("INSERT INTO Birthdays (Name,Birthday) VALUES (?,?)",(name,birthday))
+                global Birthdays 
+                Birthdays = pd.read_sql_query("Select * FROM Birthdays", con)
+            except ValueError:
+                await channel.send(f"There was a Value Error: {ValueError} \n please check your Name and birthday values birthdays should be in mm/dd variety 03/06 for example.")
+        elif reqtype.lower() == "list":
+            Birthdayslist = ""
+            for index,row in Birthdays.iterrows():
+                Birthdayslist += f"\n{row['Name']} {row['Birthday']},"
+            await channel.send(Birthdayslist)
+    except Exception:
+        await channel.send(f"There was an error with your command: {Exception}")
+    con.close()
+
+
+
+
 
 bot.run(key)
 
