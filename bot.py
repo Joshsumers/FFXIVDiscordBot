@@ -367,7 +367,7 @@ async def setvar(ctx, Typeset, worldset = "", regionset = ""):
         World = worldset
         Region = regionset
 @bot.command()
-async def birthday(ctx, reqtype = "list", name = None, birthday = None):
+async def birthday(ctx, reqtype:str = "list", name:str = None, birthday:str = None):
     channel = bot.get_channel(ctx.channel.id)
     try:
         con = sqlite3.connect('blncbot.db')
@@ -375,12 +375,14 @@ async def birthday(ctx, reqtype = "list", name = None, birthday = None):
         if reqtype.lower() == "new":
             try:
                 cursor.execute("INSERT INTO Birthdays (Name,Birthday) VALUES (?,?)",(name,birthday))
-                global Birthdays 
+                con.commit()
                 Birthdays = pd.read_sql_query("Select * FROM Birthdays", con)
+                con.close()
             except ValueError:
                 await channel.send(f"There was a Value Error: {ValueError} \n please check your Name and birthday values birthdays should be in mm/dd variety 03/06 for example.")
         elif reqtype.lower() == "list":
             Birthdayslist = ""
+            Birthdays = pd.read_sql_query("Select * FROM Birthdays", con)
             for index,row in Birthdays.iterrows():
                 Birthdayslist += f"\n{row['Name']} {row['Birthday']},"
             await channel.send(Birthdayslist)
